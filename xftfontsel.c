@@ -2,6 +2,8 @@
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
+#include <X11/Shell.h>
+
 #include <X11/Xaw/AsciiText.h>
 #include <X11/Xaw/Box.h>
 #include <X11/Xaw/Cardinals.h>
@@ -10,13 +12,14 @@
 #include <X11/Xaw/MenuButton.h>
 #include <X11/Xaw/Paned.h>
 #include <X11/Xaw/Viewport.h>
+
 #include <X11/Xft/Xft.h>
 #include <X11/extensions/Xrender.h>
 #include <fontconfig/fontconfig.h>
 
-XtAppContext appctx;
-Widget 	quit_button, copy_button, count_label, pane,
-	sample_text, top, command_box, field_box, view;
+void requery(Widget, XtPointer, XtPointer);
+void cb_quit(Widget, XtPointer, XtPointer);
+void cb_copy(Widget, XtPointer, XtPointer);
 
 enum proptype {
 	T_STR, T_INT, T_DBL, T_BOOL, T_FT_FACE, T_CHARSET
@@ -67,30 +70,46 @@ XtActionsRec actions[] = {
 	{ "Quit", (void *)exit }
 };
 
-Atom wm_delete_window;
-
 struct {
 	Cursor cursor;
 } appres;
 
-
-void requery(Widget, XtPointer, XtPointer);
-void cb_quit(Widget, XtPointer, XtPointer);
-void cb_copy(Widget, XtPointer, XtPointer);
+Atom wm_delete_window;
+XtAppContext appctx;
+Widget 	quit_button, copy_button, count_label, pane,
+	sample_text, top, command_box, field_box, view;
 
 int
 main(int argc, char *argv[])
 {
-	int i;
-	XftDraw *xd;
+	int i, screen;
+	XftDraw *draw;
+	Display *display;
+	XRenderColor renclr;
+	XftColor xftclr;
+	Colormap cmap;
 
-	XtSetLanguageProc(NULL, (XtLanguageProc) NULL, NULL);
-	top = XtAppInitialize(&appctx, "XftFontSel", NULL, 0, &argc, argv, NULL, NULL, ZERO);
+	top = XtOpenApplication(&appctx, "XftFontSel", NULL, 0, &argc, argv, NULL,
+				sessionShellWidgetClass, NULL, 0);
 	XtAppAddActions(appctx, actions, XtNumber(actions));
 
-//	xd = XftDrawCreate();
+	display = XtDisplay(top);
+	screen = DefaultScreen(display);
+	draw = XftDrawCreate(display, XtWindow(top),
+			     DefaultVisual(display, screen),
+			     DefaultColormap(display, screen));
 
-	pane 		= XtCreateManagedWidget("pane", panedWidgetClass, top, NULL, 0);
+	renclr.red   = 0;
+	renclr.green = 0;
+	renclr.blue  = 0;
+	renclr.alpha = 0xffff;
+	cmap = XCreateColormap(display, XtWindow(top),
+			       DefaultVisual(display, screen), 1);
+	XftColorAllocValue(display, DefaultVisual(display, screen),
+			   cmap, &renclr, &xftclr);
+	XftDrawRect(draw, &xftclr, 5, 5, 200, 300);
+
+	pane = XtCreateManagedWidget("pane", panedWidgetClass, top, NULL, 0);
 	command_box 	= XtCreateManagedWidget("command_box", formWidgetClass, pane, NULL, 0);
 	field_box 	= XtCreateManagedWidget("field_box", boxWidgetClass, pane, NULL, 0);
 
