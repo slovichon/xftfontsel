@@ -1,0 +1,10 @@
+XCOMM $XConsortium$
+
+           SRCS = xftfontsel.c
+           OBJS = xftfontsel.o
+        DEPLIBS = XftClientDepLibs $(DEPXFTLIB) $(DEPXRENDERLIB) XawClientDepLibs FontconfigClientDepLibs
+LOCAL_LIBRARIES = XftClientLibs $(XRENDERLIB) -lm XawClientLibs FontconfigClientLibs
+       INCLUDES = $(XFTINCLUDES) $(XRENDERINCLUDES)
+
+ComplexProgramTarget(xftfontsel)
+InstallAppDefaults(XftFontSel)
